@@ -17,6 +17,27 @@
 如果 A100 服务器上的实际目录不同，直接修改三个配置中的 `data_root`、LSK
 `init_cfg.checkpoint` 和 MTP `load_from`。
 
+## 固定数据划分
+
+`splits/` 保存由比赛集与 FAIR1M 来源匹配及 SHA-256 去重结果生成的固定划分：
+
+```text
+splits/train.txt                  6294 张
+splits/val.txt                    3018 张
+splits/drop_exact_duplicate.txt    133 张
+splits/all_unique.txt             9312 张
+```
+
+训练集与验证集不存在 SHA-256 完全重复图像。三个配置从数据目录中的
+`car_det_train/splits/train.txt` 和 `car_det_train/splits/val.txt` 读取划分。
+首次部署到服务器时执行：
+
+```bash
+mkdir -p /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/splits
+cp configs/tianzhibei_car/splits/*.txt \
+  /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/splits/
+```
+
 ## 三个正式配置
 
 ### 1. LSKNet-S baseline
