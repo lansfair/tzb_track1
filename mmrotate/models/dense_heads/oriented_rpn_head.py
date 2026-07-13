@@ -64,8 +64,13 @@ class OrientedRPNHead(RPNHead):
         if results.bboxes.numel() > 0:
             bboxes = get_box_tensor(results.bboxes)
             hbboxes = rbox2hbox(bboxes)
-            det_bboxes, keep_idxs = batched_nms(hbboxes, results.scores,
-                                                results.level_ids, cfg.nms)
+            # MMCV 2.0.x NMS kernels return float32 detections.  Passing AMP
+            # float16 scores makes ``batched_nms`` fail while scattering those
+            # values back into a half tensor.  NMS is numerically safer in
+            # float32 anyway; proposals themselves retain their original dtype.
+            det_bboxes, keep_idxs = batched_nms(
+                hbboxes.float(), results.scores.float(), results.level_ids,
+                cfg.nms)
             results = results[keep_idxs]
             # some nms would reweight the score, such as softnms
             results.scores = det_bboxes[:, -1]
