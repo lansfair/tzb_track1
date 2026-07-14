@@ -17,6 +17,52 @@
 如果 A100 服务器上的实际目录不同，直接修改三个配置中的 `data_root`、LSK
 `init_cfg.checkpoint` 和 MTP `load_from`。
 
+## 数据校验与划分
+
+训练前先完整解码每张 TIFF、解析 XML、剔除坏图，并按图像 SHA-256 去重。
+随后使用固定随机种子进行多标签分层划分，同时约束每类出现图像数和实例数：
+
+```bash
+python tools/dataset_converters/build_tianzhibei_random_split.py \
+  --data-root /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train \
+  --val-ratio 0.2 \
+  --seed 3407 \
+  --workers 8
+```
+
+当前压缩包审计结果：
+
+```text
+原始 TIFF/XML 对: 9445
+坏图: 3（85.tif、3057.tif、3250.tif）
+丢弃字节完全相同的重复影像: 133
+有效唯一图像: 9309
+训练集: 7447
+验证集: 1862
+```
+
+`3057.tif` 是 0 字节文件；`85.tif` 和 `3250.tif` 能读取 TIFF 头但完整
+像素解码失败。脚本不会删除原始数据，而是将它们写入
+`splits/drop_invalid.txt`。三个配置读取 `splits/train.txt` 和
+`splits/val.txt`，因此坏图和重复图不会进入训练或验证。
+
+重复影像的 XML 并不总是完全一致。每个 SHA-256 图像组只保留标注实例最多
+的样本；差异记录在 `duplicate_groups.csv`，保证同一影像不会同时出现在训练集
+和验证集中。
+
+主要输出包括：
+
+```text
+splits/train.txt
+splits/val.txt
+splits/all_unique.txt
+splits/drop_invalid.txt
+splits/drop_exact_duplicate.txt
+splits/sample_validation.csv
+splits/duplicate_groups.csv
+splits/split_manifest.json
+```
+
 ## 三个正式配置
 
 ### 1. LSKNet-S baseline

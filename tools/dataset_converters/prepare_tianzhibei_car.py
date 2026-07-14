@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 import argparse
-import csv
 import subprocess
+import sys
 from pathlib import Path
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Extract Tianzhibei data and build hash-safe split files.')
+        description='Extract, validate, deduplicate, and stratify Tianzhibei.')
     parser.add_argument('--archive', type=Path, required=True)
     parser.add_argument('--output-root', type=Path, required=True)
-    parser.add_argument('--split-csv', type=Path, required=True)
     parser.add_argument('--tar', default='tar')
     parser.add_argument('--unrar', default='unrar')
     parser.add_argument('--skip-extract', action='store_true')
+    parser.add_argument('--val-ratio', type=float, default=0.2)
+    parser.add_argument('--seed', type=int, default=3407)
+    parser.add_argument('--workers', type=int, default=8)
+    parser.add_argument('--restarts', type=int, default=64)
+    parser.add_argument('--swap-iterations', type=int, default=500000)
+    parser.add_argument('--reuse-validation', action='store_true')
     return parser.parse_args()
 
 
@@ -37,40 +42,22 @@ def main():
                 check=True)
 
     data_root = args.output_root / 'car_det_train'
-    image_root = data_root / 'input_path'
-    xml_root = data_root / 'gt'
-    if not image_root.is_dir() or not xml_root.is_dir():
+    if not (data_root / 'input_path').is_dir() or not (data_root / 'gt').is_dir():
         raise FileNotFoundError(
-            f'Expected {image_root} and {xml_root} after extraction.')
+            f'Expected input_path and gt below {data_root} after extraction.')
 
-    roles = {'train': [], 'validation': [], 'drop_exact_duplicate': []}
-    with args.split_csv.open(encoding='utf-8-sig', newline='') as f:
-        for row in csv.DictReader(f):
-            role = row['recommended_role']
-            if role not in roles:
-                continue
-            image_id = Path(row['competition_image']).stem
-            if not (image_root / f'{image_id}.tif').is_file():
-                raise FileNotFoundError(image_root / f'{image_id}.tif')
-            if not (xml_root / f'{image_id}.xml').is_file():
-                raise FileNotFoundError(xml_root / f'{image_id}.xml')
-            roles[role].append(image_id)
-
-    split_root = data_root / 'splits'
-    split_root.mkdir(exist_ok=True)
-    for role, image_ids in roles.items():
-        name = 'val' if role == 'validation' else role
-        (split_root / f'{name}.txt').write_text(
-            ''.join(f'{image_id}\n' for image_id in image_ids),
-            encoding='utf-8')
-    all_ids = roles['train'] + roles['validation']
-    (split_root / 'all_unique.txt').write_text(
-        ''.join(f'{image_id}\n' for image_id in all_ids), encoding='utf-8')
-
-    print(f'data_root={data_root}')
-    for role, image_ids in roles.items():
-        print(f'{role}={len(image_ids)}')
-    print(f'all_unique={len(all_ids)}')
+    split_builder = Path(__file__).with_name(
+        'build_tianzhibei_random_split.py')
+    command = [
+        sys.executable, str(split_builder), '--data-root', str(data_root),
+        '--output-dir', str(data_root / 'splits'), '--val-ratio',
+        str(args.val_ratio), '--seed', str(args.seed), '--workers',
+        str(args.workers), '--restarts', str(args.restarts),
+        '--swap-iterations', str(args.swap_iterations)
+    ]
+    if args.reuse_validation:
+        command.append('--reuse-validation')
+    subprocess.run(command, check=True)
 
 
 if __name__ == '__main__':

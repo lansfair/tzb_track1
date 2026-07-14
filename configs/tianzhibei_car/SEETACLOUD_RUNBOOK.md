@@ -10,6 +10,21 @@ cd /mnt/ht2-nas2/EO_test/tianzhibei/src/mmrotate
 
 配置不依赖项目环境变量。
 
+## 0. 校验数据并生成固定划分
+
+首次训练前执行一次：
+
+```bash
+python tools/dataset_converters/build_tianzhibei_random_split.py \
+  --data-root /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train \
+  --val-ratio 0.2 \
+  --seed 3407 \
+  --workers 8
+```
+
+确认 `split_manifest.json` 中 `invalid_images=3`、`train_images=7447`、
+`val_images=1862`，并确认十类在训练集和验证集中都存在，再启动训练。
+
 ## 1. LSKNet-S baseline
 
 ```bash
