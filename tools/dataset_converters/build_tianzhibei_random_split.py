@@ -28,6 +28,9 @@ def parse_args():
         description='Validate Tianzhibei TIFF/XML pairs and create a seeded '
         'multilabel-stratified train/validation split.')
     parser.add_argument('--data-root', type=Path, required=True)
+    parser.add_argument(
+        '--xml-dir', default='gt_pixel',
+        help='Annotation directory below data-root (default: gt_pixel).')
     parser.add_argument('--output-dir', type=Path)
     parser.add_argument('--val-ratio', type=float, default=0.2)
     parser.add_argument('--seed', type=int, default=3407)
@@ -358,7 +361,7 @@ def main():
     args = parse_args()
     data_root = args.data_root.resolve()
     image_root = data_root / 'input_path'
-    xml_root = data_root / 'gt'
+    xml_root = data_root / args.xml_dir
     output_dir = (args.output_dir or data_root / 'splits').resolve()
     if not image_root.is_dir() or not xml_root.is_dir():
         raise FileNotFoundError(
@@ -486,6 +489,7 @@ def main():
 
     manifest = dict(
         data_root=str(data_root),
+        xml_dir=args.xml_dir,
         decoder=decoder_name,
         seed=args.seed,
         requested_val_ratio=args.val_ratio,

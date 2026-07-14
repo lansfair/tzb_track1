@@ -12,7 +12,16 @@ cd /mnt/ht2-nas2/EO_test/tianzhibei/src/mmrotate
 
 ## 0. 校验数据并生成固定划分
 
-首次训练前执行一次：
+首次训练前先生成像素坐标 XML：
+
+```bash
+python tools/dataset_converters/fix_tianzhibei_geographic_xml.py \
+  --data-root /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train \
+  --workers 16
+```
+
+确认 `gt_pixel/geographic_conversion_manifest.json` 中
+`converted_images=3`、`converted_objects=118`。然后生成划分：
 
 ```bash
 python tools/dataset_converters/build_tianzhibei_random_split.py \

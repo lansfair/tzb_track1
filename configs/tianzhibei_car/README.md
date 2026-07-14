@@ -19,8 +19,21 @@
 
 ## 数据校验与划分
 
-训练前先完整解码每张 TIFF、解析 XML、剔除坏图，并按图像 SHA-256 去重。
-随后使用固定随机种子进行多标签分层划分，同时约束每类出现图像数和实例数：
+训练前先将误写为像素坐标的 WGS84 标注离线转换到独立的 `gt_pixel/`，
+保留原始 `gt/` 不变：
+
+```bash
+python tools/dataset_converters/fix_tianzhibei_geographic_xml.py \
+  --data-root /mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train \
+  --workers 16
+```
+
+当前数据中共有 3 张图、118 个对象需要转换：`5733`、`6661`、`8863`。
+转换使用 TIFF 的 WGS84 CRS 和逆 GeoTransform；其他 9442 个 XML 原样复制。
+三个正式配置只读取 `gt_pixel/`。
+
+然后完整解码每张 TIFF、解析修正后的 XML、剔除坏图，并按图像 SHA-256
+去重。使用固定随机种子进行多标签分层划分，同时约束每类出现图像数和实例数：
 
 ```bash
 python tools/dataset_converters/build_tianzhibei_random_split.py \
