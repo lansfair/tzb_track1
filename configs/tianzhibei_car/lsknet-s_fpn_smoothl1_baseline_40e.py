@@ -1,3 +1,6 @@
+data_root = '/mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train'
+checkpoint = '/mnt/ht2-nas2/EO_test/wyf/tzb/weights/lsk_s_backbone-e9d2e551.pth'
+
 angle_version = 'le90'
 auto_scale_lr = dict(base_batch_size=16, enable=False)
 custom_hooks = [
@@ -15,11 +18,10 @@ custom_imports = dict(
         'projects.tianzhibei_car',
         'projects.LSKNet.lsknet',
     ])
-data_root = '/mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/'
 dataset_common = dict(
     boundary_mode='refit',
     data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-    data_root='/mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/',
+    data_root=data_root,
     drop_invalid=True,
     filter_cfg=dict(filter_empty_gt=True),
     img_suffix='.tif',
@@ -80,10 +82,7 @@ model = dict(
             320,
             512,
         ],
-        init_cfg=dict(
-            checkpoint=
-            '/mnt/ht2-nas2/EO_test/tianzhibei/weights/lsk_s_backbone-e9d2e551.pth',
-            type='Pretrained'),
+        init_cfg=dict(checkpoint=checkpoint, type='Pretrained'),
         norm_cfg=dict(requires_grad=True, type='SyncBN'),
         type='LSKNet'),
     data_preprocessor=dict(
@@ -377,7 +376,7 @@ test_dataloader = dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -433,7 +432,7 @@ train_dataloader = dict(
         ann_file='splits/train.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -505,7 +504,7 @@ val_dataloader = dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/mnt/ht2-nas2/EO_test/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
