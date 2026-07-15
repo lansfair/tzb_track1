@@ -84,7 +84,7 @@ custom_imports = dict(
     ])
 dataset_common = dict(
     boundary_mode='refit',
-    data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+    data_prefix=dict(ann_path='gt/', img_path='input_path/'),
     data_root=data_root,
     drop_invalid=True,
     filter_cfg=dict(filter_empty_gt=True),
@@ -445,7 +445,7 @@ test_dataloader = dict(
     dataset=dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
         data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
@@ -501,7 +501,7 @@ train_dataloader = dict(
     dataset=dict(
         ann_file='splits/train.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
         data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
@@ -586,7 +586,7 @@ val_dataloader = dict(
     dataset=dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
         data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
