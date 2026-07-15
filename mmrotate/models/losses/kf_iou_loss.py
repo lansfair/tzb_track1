@@ -149,13 +149,17 @@ class KFLoss(nn.Module):
             assert weight.shape == pred.shape
             weight = weight.mean(-1)
 
-        return kfiou_loss(
-            pred,
-            target,
-            fun=self.fun,
-            weight=weight,
-            avg_factor=avg_factor,
-            pred_decode=pred_decode,
-            targets_decode=targets_decode,
-            reduction=reduction,
-            **kwargs) * self.loss_weight
+        # ``torch.det`` and ``torch.inverse`` use CUDA LU factorization,
+        # which is not implemented for FP16. KFIoU is also numerically
+        # sensitive, so keep all of its matrix operations in FP32 under AMP.
+        with torch.cuda.amp.autocast(enabled=False):
+            return kfiou_loss(
+                pred.float(),
+                target.float(),
+                fun=self.fun,
+                weight=weight.float() if weight is not None else None,
+                avg_factor=avg_factor,
+                pred_decode=pred_decode.float(),
+                targets_decode=targets_decode.float(),
+                reduction=reduction,
+                **kwargs) * self.loss_weight

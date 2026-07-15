@@ -175,6 +175,23 @@ class TestSpatialBorderLoss(unittest.TestCase):
 
 class TestKFLoss(unittest.TestCase):
 
+    def test_fp16_inputs(self):
+        pred = torch.rand((10, 5), dtype=torch.float16)
+        target = torch.rand((10, 5), dtype=torch.float16)
+        weight = torch.rand((10, ), dtype=torch.float16)
+        pred_decode = torch.rand((10, 5), dtype=torch.float16)
+        targets_decode = torch.rand((10, 5), dtype=torch.float16)
+
+        loss = KFLoss()(
+            pred,
+            target,
+            weight,
+            pred_decode=pred_decode,
+            targets_decode=targets_decode)
+
+        assert loss.dtype == torch.float32
+        assert torch.isfinite(loss)
+
     def test_regression_losses(self):
 
         pred = torch.rand((10, 5))
