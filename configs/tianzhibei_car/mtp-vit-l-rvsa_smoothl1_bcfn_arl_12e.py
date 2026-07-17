@@ -1,7 +1,5 @@
-data_root = '/mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train'
-
 angle_version = 'le90'
-auto_scale_lr = dict(base_batch_size=16, enable=False)
+auto_scale_lr = dict(base_batch_size=16, enable=True)
 custom_hooks = [
     dict(type='mmdet.NumClassCheckHook'),
     dict(
@@ -10,71 +8,6 @@ custom_hooks = [
         priority=49,
         type='EMAHook',
         update_buffers=True),
-    dict(
-        switch_epoch=28,
-        switch_pipeline=[
-            dict(alpha_policy='ignore', type='LoadGeoTiffRGB'),
-            dict(
-                box_type='qbox', type='mmdet.LoadAnnotations', with_bbox=True),
-            dict(
-                box_type_mapping=dict(gt_bboxes='rbox'),
-                type='ConvertBoxType'),
-            dict(size=1024, type='ResizeAndPad'),
-            dict(angles=[
-                90,
-                180,
-                270,
-            ], prob=0.5, type='RandomChoiceRotate'),
-            dict(angle_range=15, prob=0.2, type='RandomRotate'),
-            dict(
-                direction=[
-                    'horizontal',
-                    'vertical',
-                    'diagonal',
-                ],
-                prob=0.75,
-                type='mmdet.RandomFlip'),
-            dict(type='mmdet.PhotoMetricDistortion'),
-            dict(
-                prob=0.1, sigma_range=(
-                    1.0,
-                    4.0,
-                ), type='RandomGaussianNoise'),
-            dict(
-                prob=0.05, sigma_range=(
-                    0.1,
-                    0.8,
-                ), type='RandomGaussianBlur'),
-            dict(type='mmdet.PackDetInputs'),
-        ],
-        type='mmdet.PipelineSwitchHook'),
-    dict(
-        switch_epoch=36,
-        switch_pipeline=[
-            dict(alpha_policy='ignore', type='LoadGeoTiffRGB'),
-            dict(
-                box_type='qbox', type='mmdet.LoadAnnotations', with_bbox=True),
-            dict(
-                box_type_mapping=dict(gt_bboxes='rbox'),
-                type='ConvertBoxType'),
-            dict(size=1024, type='ResizeAndPad'),
-            dict(
-                direction=[
-                    'horizontal',
-                    'vertical',
-                ],
-                prob=0.5,
-                type='mmdet.RandomFlip'),
-            dict(type='mmdet.PackDetInputs'),
-        ],
-        type='mmdet.PipelineSwitchHook'),
-    dict(
-        stages=[
-            dict(begin_epoch=0, name='A-main'),
-            dict(begin_epoch=28, lr=2e-05, name='B-tail'),
-            dict(begin_epoch=36, lr=1e-05, name='C-calibrate'),
-        ],
-        type='TianzhibeiStageHook'),
 ]
 custom_imports = dict(
     allow_failed_imports=False,
@@ -82,10 +15,11 @@ custom_imports = dict(
         'projects.tianzhibei_car',
         'projects.tianzhibei_car.mtp_backbone',
     ])
+data_root = '/autodl-fs/data/tianzhibei/data/car_det_train/'
 dataset_common = dict(
     boundary_mode='refit',
-    data_prefix=dict(ann_path='gt/', img_path='input_path/'),
-    data_root=data_root,
+    data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+    data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
     drop_invalid=True,
     filter_cfg=dict(filter_empty_gt=True),
     img_suffix='.tif',
@@ -127,7 +61,7 @@ formal_val_pipeline = [
         ),
         type='mmdet.PackDetInputs'),
 ]
-load_from = '/mnt/ht2-nas2/EO_test/tianzhibei/weights/mtp-vit-l-rvsa-fair1m-to-tianzhibei-1024.pth'
+load_from = '/autodl-fs/data/tianzhibei/weights/mtp_smoothl1_epoch35.pth'
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 model = dict(
@@ -213,11 +147,15 @@ model = dict(
                 loss_weight=1.0,
                 type='LabelSmoothCrossEntropyLoss'),
             num_classes=10,
+            arl_beta=1.0,
+            arl_gamma=1.0,
+            arl_max_weight=2.0,
+            arl_min_weight=0.25,
             predict_box_type='rbox',
             reg_class_agnostic=True,
             reg_predictor_cfg=dict(type='mmdet.Linear'),
             roi_feat_size=7,
-            type='RotatedShared2FCBBoxHead'),
+            type='MildAdaptiveRecognitionBBoxHead'),
         bbox_roi_extractor=dict(
             featmap_strides=[
                 4,
@@ -226,12 +164,14 @@ model = dict(
                 32,
             ],
             out_channels=256,
+            bilinear_channels=64,
+            fusion_scale=0.1,
             roi_layer=dict(
                 clockwise=True,
                 out_size=7,
                 sample_num=2,
                 type='RoIAlignRotated'),
-            type='RotatedSingleRoIExtractor'),
+            type='AdjacentLevelBilinearRoIExtractor'),
         type='mmdet.StandardRoIHead'),
     rpn_head=dict(
         anchor_generator=dict(
@@ -352,7 +292,7 @@ optim_wrapper = dict(
             0.999,
         ),
         fused=True,
-        lr=0.0001,
+        lr=2e-05,
         type='AdamW',
         weight_decay=0.05),
     paramwise_cfg=dict(
@@ -362,15 +302,15 @@ param_scheduler = [
     dict(
         begin=0,
         by_epoch=False,
-        end=63,
+        end=500,
         start_factor=0.3333333333333333,
         type='LinearLR'),
     dict(
-        T_max=28,
+        T_max=12,
         begin=0,
         by_epoch=True,
-        end=28,
-        eta_min=4e-05,
+        end=12,
+        eta_min=1e-06,
         type='CosineAnnealingLR'),
 ]
 resume = False
@@ -445,8 +385,8 @@ test_dataloader = dict(
     dataset=dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
-        data_root=data_root,
+        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -481,28 +421,15 @@ test_dataloader = dict(
     pin_memory=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 test_evaluator = dict(metric='mAP', type='DOTAMetric')
-train_cfg = dict(
-    dynamic_intervals=[
-        (
-            5,
-            2,
-        ),
-        (
-            28,
-            1,
-        ),
-    ],
-    max_epochs=40,
-    type='EpochBasedTrainLoop',
-    val_interval=1)
+train_cfg = dict(max_epochs=12, type='EpochBasedTrainLoop', val_interval=2)
 train_dataloader = dict(
     batch_sampler=None,
     batch_size=4,
     dataset=dict(
         ann_file='splits/train.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
-        data_root=data_root,
+        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -541,20 +468,6 @@ train_dataloader = dict(
         dense_threshold=118,
         hard_fraction=0.2,
         ordinary_fraction=0.5,
-        phase_schedule=[
-            dict(
-                begin_epoch=28,
-                hard_fraction=0.2,
-                hard_ids_file='work_dirs/tianzhibei/hard_train_ids.txt',
-                ordinary_fraction=0.3,
-                rare_fraction=0.5),
-            dict(
-                begin_epoch=36,
-                hard_fraction=0.0,
-                hard_ids_file=None,
-                ordinary_fraction=1.0,
-                rare_fraction=0.0),
-        ],
         rare_fraction=0.3,
         rare_labels=(
             5,
@@ -586,8 +499,8 @@ val_dataloader = dict(
     dataset=dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
-        data_prefix=dict(ann_path='gt/', img_path='input_path/'),
-        data_root=data_root,
+        data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
+        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -622,6 +535,7 @@ val_dataloader = dict(
     pin_memory=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 val_evaluator = dict(metric='mAP', type='DOTAMetric')
+work_dir = 'work_dirs/mtp-vit-l-rvsa_smoothl1_bcfn_arl_12e'
 val_pipeline = [
     dict(alpha_policy='warn', type='LoadGeoTiffRGB'),
     dict(box_type='qbox', type='mmdet.LoadAnnotations', with_bbox=True),

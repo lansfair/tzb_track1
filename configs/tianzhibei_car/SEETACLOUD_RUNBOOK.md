@@ -47,18 +47,18 @@ bash tools/dist_train.sh \
 
 ```bash
 bash tools/dist_train.sh \
-  configs/tianzhibei_car/lsknet-s_fpn_smoothl1_staged_40e.py \
+  configs/tianzhibei_car/lsknet-s_fpn_kfiou_staged_40e.py \
   4 \
-  --work-dir /mnt/ht2-nas2/EO_test/tianzhibei/work_dirs/lsknet_s_abc
+  --work-dir /mnt/ht2-nas2/EO_test/tianzhibei/work_dirs/lsknet_s_abc_kfiou
 ```
 
 ## 3. MTP ViT-L+RVSA A/B/C
 
 ```bash
 bash tools/dist_train.sh \
-  configs/tianzhibei_car/mtp-vit-l-rvsa_smoothl1_staged_40e.py \
+  configs/tianzhibei_car/mtp-vit-l-rvsa_kfiou_staged_40e.py \
   4 \
-  --work-dir /mnt/ht2-nas2/EO_test/tianzhibei/work_dirs/mtp_vit_l_rvsa_abc
+  --work-dir /mnt/ht2-nas2/EO_test/tianzhibei/work_dirs/mtp_vit_l_rvsa_abc_kfiou
 ```
 
 三个实验按顺序运行，不要在同一组 GPU 上并发启动。不要添加
