@@ -33,7 +33,7 @@ Both configs are flattened and do not use `_base_`.  Edit `data_root` if the
 A100 dataset path differs and place/copy the starting checkpoint at:
 
 ```text
-/autodl-fs/data/tianzhibei/weights/mtp_smoothl1_epoch35.pth
+/mnt/ht2-nas2/EO_test/wyf/tzb/weights/mtp_smoothl1_epoch35.pth
 ```
 
 Run on 4xA100 80 GB (per-GPU batch 4, global batch 16):
@@ -57,11 +57,11 @@ Generate crops from the corrected XML and the same image-level split:
 
 ```bash
 python tools/tianzhibei/build_aligned_refiner_dataset.py \
-  --data-root /autodl-fs/data/tianzhibei/data/car_det_train \
-  --train-split /autodl-fs/data/tianzhibei/data/car_det_train/splits/train.txt \
-  --val-split /autodl-fs/data/tianzhibei/data/car_det_train/splits/val.txt \
+  --data-root /mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train \
+  --train-split /mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train/splits/train.txt \
+  --val-split /mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train/splits/val.txt \
   --ann-dir gt_pixel \
-  --output-dir /autodl-fs/data/tianzhibei/refiner_crops \
+  --output-dir /mnt/ht2-nas2/EO_test/wyf/tzb/refiner_crops \
   --workers 16
 ```
 
@@ -83,7 +83,7 @@ python tools/tianzhibei/refine_predictions_with_aligned_classifier.py \
   predictions.pkl \
   work_dirs/aligned_refiner_convnext_tiny/best_macro_f1.pth \
   predictions_aligned_refined.pkl \
-  --image-root /autodl-fs/data/tianzhibei/data/car_det_train/input_path
+  --image-root /mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train/input_path
 ```
 
 Only four predefined pairs can be relabelled: Small Car/Van, Dump/Cargo,

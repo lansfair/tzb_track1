@@ -1,4 +1,7 @@
 angle_version = 'le90'
+data_root = '/mnt/ht2-nas2/EO_test/wyf/tzb/data/car_det_train/'
+checkpoint = '/mnt/ht2-nas2/EO_test/wyf/tzb/weights/mtp_smoothl1_epoch35.pth'
+work_root = '/mnt/ht2-nas2/EO_test/wyf/tzb/work_dirs'
 auto_scale_lr = dict(base_batch_size=16, enable=True)
 custom_hooks = [
     dict(type='mmdet.NumClassCheckHook'),
@@ -15,11 +18,10 @@ custom_imports = dict(
         'projects.tianzhibei_car',
         'projects.tianzhibei_car.mtp_backbone',
     ])
-data_root = '/autodl-fs/data/tianzhibei/data/car_det_train/'
 dataset_common = dict(
     boundary_mode='refit',
     data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-    data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
+    data_root=data_root,
     drop_invalid=True,
     filter_cfg=dict(filter_empty_gt=True),
     img_suffix='.tif',
@@ -61,7 +63,7 @@ formal_val_pipeline = [
         ),
         type='mmdet.PackDetInputs'),
 ]
-load_from = '/autodl-fs/data/tianzhibei/weights/mtp_smoothl1_epoch35.pth'
+load_from = checkpoint
 log_level = 'INFO'
 log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
 model = dict(
@@ -389,7 +391,7 @@ test_dataloader = dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -432,7 +434,7 @@ train_dataloader = dict(
         ann_file='splits/train.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -503,7 +505,7 @@ val_dataloader = dict(
         ann_file='splits/val.txt',
         boundary_mode='refit',
         data_prefix=dict(ann_path='gt_pixel/', img_path='input_path/'),
-        data_root='/autodl-fs/data/tianzhibei/data/car_det_train/',
+        data_root=data_root,
         drop_invalid=True,
         filter_cfg=dict(filter_empty_gt=True),
         img_suffix='.tif',
@@ -538,7 +540,7 @@ val_dataloader = dict(
     pin_memory=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 val_evaluator = dict(metric='mAP', type='DOTAMetric')
-work_dir = 'work_dirs/mtp-vit-l-rvsa_smoothl1_proto_12e'
+work_dir = f'{work_root}/mtp-vit-l-rvsa_smoothl1_proto_12e'
 val_pipeline = [
     dict(alpha_policy='warn', type='LoadGeoTiffRGB'),
     dict(box_type='qbox', type='mmdet.LoadAnnotations', with_bbox=True),
